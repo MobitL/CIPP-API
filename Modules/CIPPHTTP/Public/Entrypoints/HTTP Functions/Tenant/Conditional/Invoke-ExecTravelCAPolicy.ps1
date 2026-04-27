@@ -131,7 +131,7 @@ function Invoke-ExecTravelCAPolicy {
         }
 
         if ($CountryCodes -and $CountryCodes.Count -gt 0) {
-            $CountryLocationName = "CIPP_Travel_${StartStr}_${EndStr}_Countries"
+            $CountryLocationName = "CIPP_Travel_${StartStr}_${EndStr}"
             $CountryLocationBody = @{
                 '@odata.type'                     = '#microsoft.graph.countryNamedLocation'
                 displayName                       = $CountryLocationName

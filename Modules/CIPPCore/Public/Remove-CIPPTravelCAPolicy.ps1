@@ -30,7 +30,6 @@ function Remove-CIPPTravelCAPolicy {
 
         # Find and delete the associated country Named Location if it exists
         $CountryLocationName = $PolicyName -replace 'CIPP_TravelPolicy_', 'CIPP_Travel_'
-        $CountryLocationName = "${CountryLocationName}_Countries"
         $Locations = New-GraphGetRequest `
             -uri "https://graph.microsoft.com/beta/identity/conditionalAccess/namedLocations?`$filter=displayName eq '$CountryLocationName'&`$select=id,displayName" `
             -tenantid $TenantFilter -asApp $true
