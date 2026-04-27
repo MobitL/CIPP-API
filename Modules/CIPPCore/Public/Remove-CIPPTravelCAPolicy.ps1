@@ -3,6 +3,7 @@ function Remove-CIPPTravelCAPolicy {
     param(
         [string]$TenantFilter,
         [string]$PolicyName,
+        [string[]]$UserMembers,
         $Headers
     )
     try {
@@ -42,6 +43,44 @@ function Remove-CIPPTravelCAPolicy {
                 -message "Deleted country Named Location: $($Loc.displayName)" `
                 -Sev 'Info' -tenant $TenantFilter
         }
+
+        #region --- Remove users from CIPP_TravelingUsers only if no other active travel policies ---
+        if ($UserMembers -and $UserMembers.Count -gt 0) {
+            # Check for other active CIPP_TravelPolicy policies
+            $ActiveTravelPolicies = New-GraphGetRequest `
+                -uri "https://graph.microsoft.com/beta/identity/conditionalAccess/policies?`$filter=startswith(displayName,'CIPP_TravelPolicy_')&`$select=id,displayName" `
+                -tenantid $TenantFilter -asApp $true
+
+            # Exclude the policy we just deleted
+            $RemainingPolicies = @($ActiveTravelPolicies | Where-Object { $_.displayName -ne $PolicyName })
+
+            if ($RemainingPolicies.Count -eq 0) {
+                # No other active travel policies - safe to remove users from group
+                $TravelGroup = New-GraphGetRequest `
+                    -uri "https://graph.microsoft.com/beta/groups?`$filter=displayName eq 'CIPP_TravelingUsers'&`$select=id,displayName&`$count=true" `
+                    -tenantid $TenantFilter -asApp $true -ComplexFilter
+
+                if ($TravelGroup) {
+                    foreach ($Member in $UserMembers) {
+                        try {
+                            Remove-CIPPGroupMember -GroupId $TravelGroup[0].id -Member $Member -TenantFilter $TenantFilter -APIName 'Remove-CIPPTravelCAPolicy'
+                            Write-LogMessage -headers $Headers -API 'Remove-CIPPTravelCAPolicy' `
+                                -message "Removed $Member from CIPP_TravelingUsers (no remaining active travel policies)" `
+                                -Sev 'Info' -tenant $TenantFilter
+                        } catch {
+                            Write-LogMessage -headers $Headers -API 'Remove-CIPPTravelCAPolicy' `
+                                -message "Failed to remove $Member from CIPP_TravelingUsers: $($_.Exception.Message)" `
+                                -Sev 'Warning' -tenant $TenantFilter
+                        }
+                    }
+                }
+            } else {
+                Write-LogMessage -headers $Headers -API 'Remove-CIPPTravelCAPolicy' `
+                    -message "Skipping group removal for policy '$PolicyName' - user(s) still have $($RemainingPolicies.Count) active travel policy(s): $($RemainingPolicies.displayName -join ', ')" `
+                    -Sev 'Info' -tenant $TenantFilter
+            }
+        }
+        #endregion
 
         return "Successfully deleted travel policy '$PolicyName' and associated resources"
 

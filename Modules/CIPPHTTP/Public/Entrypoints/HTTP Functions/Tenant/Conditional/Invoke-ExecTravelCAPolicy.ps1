@@ -43,6 +43,7 @@ function Invoke-ExecTravelCAPolicy {
             }
         }
         $UserIds = $ResolvedUserIds
+        $UserMembers = $UserUPNs ?? $UserIds
 
         # Build date strings for policy name
         $StartStr = [datetimeoffset]::FromUnixTimeSeconds($StartDate).ToString('yyyyMMdd')
@@ -220,7 +221,7 @@ function Invoke-ExecTravelCAPolicy {
         #endregion
 
         #region --- 5. Schedule tasks ---
-        $UserMembers = $UserUPNs ?? $UserIds
+
 
         # StartDate: Add users to CIPP_TravelingUsers group
         $AddMemberTask = [pscustomobject]@{
@@ -238,21 +239,6 @@ function Invoke-ExecTravelCAPolicy {
         }
         Add-CIPPScheduledTask -Task $AddMemberTask -hidden $false
 
-        # EndDate: Remove users from CIPP_TravelingUsers group
-        $RemoveMemberTask = [pscustomobject]@{
-            TenantFilter  = $TenantFilter
-            Name          = "Vacation Travel - Remove from group: $PolicyName"
-            Command       = @{ value = 'Remove-CIPPGroupMember'; label = 'Remove-CIPPGroupMember' }
-            Parameters    = [pscustomobject]@{
-                GroupType = 'Security'
-                GroupId   = $TravelGroupId
-                Member    = $UserMembers
-            }
-            ScheduledTime = $EndDate
-            PostExecution = $Request.Body.postExecution
-            Reference     = $Request.Body.reference
-        }
-        Add-CIPPScheduledTask -Task $RemoveMemberTask -hidden $false
 
         # EndDate: Delete travel CA policy and country Named Location
         $DeletePolicyTask = [pscustomobject]@{
@@ -262,6 +248,7 @@ function Invoke-ExecTravelCAPolicy {
             Parameters    = [pscustomobject]@{
                 TenantFilter = $TenantFilter
                 PolicyName   = $PolicyName
+                UserMembers  = $UserMembers
             }
             ScheduledTime = $EndDate
             PostExecution = $Request.Body.postExecution
