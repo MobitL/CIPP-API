@@ -19,6 +19,10 @@ function Invoke-ExecTravelCAPolicy {
         $CountryCodes = $Request.Body.CountryCodes
         $IncludeTrusted = $Request.Body.IncludeTrusted
 
+        # Debug logging
+        Write-Information "DEBUG - StartDate: $StartDate | EndDate: $EndDate"
+        Write-Information "DEBUG - StartDateStr: $($Request.Body.StartDateStr) | EndDateStr: $($Request.Body.EndDateStr)"
+
         # Build user lists
         $UserUPNs = $Users.addedFields.userPrincipalName
         $UserIds = $Users.value
