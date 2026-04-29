@@ -50,8 +50,8 @@ function Invoke-ExecTravelCAPolicy {
         $UserMembers = $UserUPNs ?? $UserIds
 
         # Build date strings for policy name
-        $StartStr = [datetimeoffset]::FromUnixTimeSeconds($StartDate).ToString('yyyyMMdd')
-        $EndStr = [datetimeoffset]::FromUnixTimeSeconds($EndDate).ToString('yyyyMMdd')
+        $StartStr = $Request.Body.StartDateStr ?? [datetimeoffset]::FromUnixTimeSeconds($StartDate).ToString('yyyyMMdd')
+        $EndStr = $Request.Body.EndDateStr ?? [datetimeoffset]::FromUnixTimeSeconds($EndDate).ToString('yyyyMMdd')
         $PolicyName = "CIPP_TravelPolicy_${StartStr}_${EndStr}"
 
         #region --- 1. Check/create CIPP_TravelingUsers group ---
