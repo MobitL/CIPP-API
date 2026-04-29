@@ -45,7 +45,7 @@ function Remove-CIPPTravelCAPolicy {
                 if ($TravelGroup) {
                     foreach ($Member in $UserMembers) {
                         try {
-                            Remove-CIPPGroupMember -GroupId $TravelGroup[0].id -Member $Member -TenantFilter $TenantFilter -APIName 'Remove-CIPPTravelCAPolicy'
+                            Remove-CIPPGroupMember -GroupId $TravelGroup[0].id -Member $Member -TenantFilter $TenantFilter -APIName 'Remove-CIPPTravelCAPolicy' -GroupType 'Security'
                             Write-LogMessage -headers $Headers -API 'Remove-CIPPTravelCAPolicy' `
                                 -message "Removed $Member from CIPP_TravelingUsers (no remaining active travel policies)" `
                                 -Sev 'Info' -tenant $TenantFilter
